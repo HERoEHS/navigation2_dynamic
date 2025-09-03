@@ -97,37 +97,22 @@ class KFHungarianTracker(Node):
     def callback(self, msg):
         """callback function for detection result"""
 
-        # update delta time with safety checks
-        current_sec = msg.header.stamp.sec
-        current_nanosec = msg.header.stamp.nanosec
+        # update delta time
+        dt = (msg.header.stamp.sec - self.sec) + (
+            msg.header.stamp.nanosec - self.nanosec
+        ) / 1e9
+        self.sec = msg.header.stamp.sec
+        self.nanosec = msg.header.stamp.nanosec
 
-        # 첫 프레임 체크
-        if self.sec == 0 and self.nanosec == 0:
-            self.sec = current_sec
-            self.nanosec = current_nanosec
-            dt = 0.0
-        else:
-            dt = (current_sec - self.sec) + (current_nanosec - self.nanosec) / 1e9
-
-        # dt 안전성 검사 강화
+        # ← 비정상 dt 방어
         if not np.isfinite(dt):
             dt = 0.0
-            self.get_logger().warn(f"Non-finite dt detected, using 0")
-        elif dt < 0:
-            dt = 0.0
-            self.get_logger().warn(f"Negative dt detected: {dt}, using 0")
-        elif dt > 0.5:  # 500ms 이상은 비정상
-            self.get_logger().warn(f"Large dt detected: {dt:.3f}s, clamping to 0.1s")
-            dt = 0.1
-
-        # 타임스탬프 업데이트
-        self.sec = current_sec
-        self.nanosec = current_nanosec
+        dt = max(0.0, min(dt, 1.0))
 
         # get detection
         detections = msg.obstacles
 
-        # kalman predict with bounded dt
+        # kalman predict
         for obj in self.obstacle_list:
             obj.predict(dt)
 
