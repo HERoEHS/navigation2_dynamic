@@ -20,8 +20,6 @@ setup(
     maintainer_email='csj15thu@gmail.com, stevenmacenski@gmail.com, alex@polymathrobotics.com',
     description='Use Kalman Filter and Hungarian algorithm to track multiple objects',
     license='Apache-2.0',
-    tests_require=['pytest'],
-    test_suite='test',  # Name of the test suite
     entry_points={
         'console_scripts': [
             'kf_hungarian_node = kf_hungarian_tracker.kf_hungarian_node:main'
